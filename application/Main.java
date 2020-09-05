@@ -1,5 +1,7 @@
 package application;
 
+import java.util.Arrays;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -32,7 +34,8 @@ public class Main extends Application {
     private boolean unsortedItemFound;
     private Label itemToInsert;
     private Rectangle rectangle1, rectangle2, rectangle3;
-    private int mergeSortSizeIndex, mergeSortFirst;
+    private int mergeSortSize, mergeSortFirst, leftIndex, leftLast, rightIndex, rightLast, fillIndex, mergeLast;
+    private boolean mergeComplete, firstPass;
     private ComboBox<String> comboBox;
     private String algorithm = "";
     
@@ -54,7 +57,6 @@ public class Main extends Application {
 		    
 		    // create array
 		    array = buildNewLabelArray();
-		    mergeSortTempArray = new Label[N];
 		    
             // create controls
             comboBox = new ComboBox<>();
@@ -148,6 +150,7 @@ public class Main extends Application {
 	private void shuffle() {
 	    array = buildNewLabelArray();
 	    shuffle(array);
+	    mergeSortTempArray = array.clone();
 	}
 
     private void shuffle(Label[] a) {
@@ -162,7 +165,7 @@ public class Main extends Application {
 	private void redraw() {
 	    box.getChildren().clear();
         for (int i = 0; i < N; i++) {
-            box.getChildren().add(array[i]);;
+            box.getChildren().add(array[i]);
         }        
     }
 
@@ -172,8 +175,10 @@ public class Main extends Application {
         minSelectionSort = 0;
         iInsertionSort = 1;
         unsortedItemFound = false;
-        mergeSortSizeIndex = 1;
+        mergeSortSize = 1;
         mergeSortFirst = 0;
+        mergeComplete = false;
+        firstPass = true;
     }
 
     private void swap(Label[] a, int i, int j) {
@@ -183,73 +188,95 @@ public class Main extends Application {
 	}
 	
 	private EventHandler<ActionEvent> mergeSortStep = e -> {
-	    if (mergeSortSizeIndex > N) {
+	    if (mergeSortSize > N) {
+	        redraw();
 	        mergeSortAnimationController.stop();
 	        mergeSortFirst = 0;
-	        mergeSortSizeIndex = 1;
+	        mergeSortSize = 1;
+	        mergeComplete = false;
+	        firstPass = true;
 	    }
 	    else {
 	        mergeSortStep();
-	        redraw();
 	    }
 	};
 	
 	private void mergeSortStep() {
-	    int mid = Math.min(mergeSortFirst + mergeSortSizeIndex-1, N-1);
-	    int last = Math.min(mergeSortFirst + 2*mergeSortSizeIndex-1, N-1);
-	    merge(array, mergeSortTempArray, mergeSortFirst, mid, last);
-	    //adjust indexes
-	    if (mergeSortFirst < N - 2*mergeSortSizeIndex) {
-	        mergeSortFirst += 2*mergeSortSizeIndex;
-	    } else if (mergeSortSizeIndex < N) {
-	        mergeSortSizeIndex = 2*mergeSortSizeIndex;
-	        mergeSortFirst = 0;
+        if (firstPass) {
+            mergeSortTempArray = Arrays.copyOf(array, array.length);
+            leftIndex = mergeSortFirst;
+            leftLast = Math.min(mergeSortFirst + mergeSortSize-1, N-1);
+            mergeLast = Math.min(mergeSortFirst+2*mergeSortSize-1, N-1);
+            rightIndex = leftLast+1;
+            rightLast = mergeLast;
+            fillIndex = 0;
+            fillBlank();
+            firstPass = false;
+        }
+
+	    if (mergeComplete) {
+	        mergeSortTempArray = Arrays.copyOf(array, array.length);
+            leftIndex = mergeSortFirst;
+	        leftLast = Math.min(mergeSortFirst + mergeSortSize-1, N-1);
+            rightIndex = leftLast+1;
+	        mergeLast = Math.min(mergeSortFirst + 2*mergeSortSize-1, N-1);
+	        rightLast = mergeLast;
+	        fillIndex = 0;
+	        fillBlank();
+	        mergeComplete = false;
+	    }
+
+	    mergeStep();
+	    
+	    if (mergeComplete) {
+    	    if (mergeSortFirst < N - 2*mergeSortSize) {
+    	        mergeSortFirst += 2*mergeSortSize;
+    	    } else if (mergeSortSize < N) {
+    	        mergeSortSize = 2*mergeSortSize;
+    	        mergeSortFirst = 0;
+    	    }
 	    }
 	}
-	
-	private void merge(Label[] a, Label[] temp, int first, int mid, int last) {
-	      
-	    // set index for left half
-	    int leftIndex = first;
-	    int leftLast = mid;
-	    // set index for right half
-	    int rightIndex = mid + 1;
-	    int rightLast = last;
-	    // set index for temp
-	    int tempIndex = 0;
-	      
+		
+	private void mergeStep() {	      
 	    // fill temp from left and right halves in ascending order
-	    while (leftIndex <= leftLast && rightIndex <= rightLast) { // while both halves have remaining entries
-	        Rectangle m = (Rectangle)a[leftIndex].getGraphic();
-            Rectangle n = (Rectangle)a[rightIndex].getGraphic();
+	    if (leftIndex <= leftLast && rightIndex <= rightLast) { // while both halves have remaining entries
+	        Rectangle m = (Rectangle)mergeSortTempArray[leftIndex].getGraphic();
+            Rectangle n = (Rectangle)mergeSortTempArray[rightIndex].getGraphic();
 	        if (m.getHeight() <= n.getHeight()) {
-	            temp[tempIndex] = a[leftIndex];
+	            array[mergeSortFirst+fillIndex] = mergeSortTempArray[leftIndex];
 	            leftIndex++;
 	        }
 	        else {
-	            temp[tempIndex] = a[rightIndex];
+	            array[mergeSortFirst+fillIndex] = mergeSortTempArray[rightIndex];
 	            rightIndex++;
 	        }
-	        tempIndex++;
-	    }
-	      
-	    while (leftIndex <= leftLast) { // left half has remaining entries
-	        temp[tempIndex] = a[leftIndex];
+	        fillIndex++;
+	    } else if (leftIndex <= leftLast) { // left half has remaining entries
+            array[mergeSortFirst+fillIndex] = mergeSortTempArray[leftIndex];
 	        leftIndex++;
-	        tempIndex++;
-	    }
-	      
-	    while (rightIndex <= rightLast) { // right half has remaining entries
-	        temp[tempIndex] = a[rightIndex];
+	        fillIndex++;
+	    } else if (rightIndex <= rightLast) { // right half has remaining entries
+            array[mergeSortFirst+fillIndex] = mergeSortTempArray[rightIndex];
 	        rightIndex++;
-	        tempIndex++;
+	        fillIndex++;
 	    }
-	      
-	    // copy temp into arr
-	    for (int i = 0; i <= last - first; i++) {
-	        a[first + i] = temp[i];
+	    redraw();
+	    if (leftIndex > leftLast && rightIndex > rightLast) {
+	        mergeComplete = true;
 	    }
     }
+
+    private void fillBlank() {
+        for (int i = mergeSortFirst; i <= mergeLast; i++) {
+            Label label = new Label(null, new Rectangle(4, 0));
+            label.setMinSize(4, 200);
+            label.setMaxSize(4, 200);
+            label.setAlignment(Pos.BOTTOM_CENTER);
+            array[i] = label;
+        }
+	    redraw();
+	}
     
     private EventHandler<ActionEvent> selSortStep = e -> {
         if (iSelectionSort == N-1) {
