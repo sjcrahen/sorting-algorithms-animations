@@ -1,111 +1,99 @@
 package application;
 
-import java.util.Arrays;
-
-import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.shape.Rectangle;
 
 public class MergeSort {
     
-    private static Label[] tempArray;
-    private static int chunkSize = 1, first, leftIndex, leftLast, rightIndex, rightLast, i, last;
-    private static boolean mergeComplete, firstPass = true;
+    private static Label[] temp;
     
     private MergeSort() {}
     
-    public static void reset() {
-        chunkSize = 1;
-        first = 0;
-        mergeComplete = false;
-        firstPass = true;
-    }
-    
-    public static void sort(Label[] array, int arraySize, Timeline animationController) {
-        if (chunkSize > arraySize) {
-            animationController.stop();
-            reset();
-        }
-        else {
-            step(array, arraySize);
-        }
+    public static void mergeSort(Label[] arr, int first, int last) {
+        temp = new Label[arr.length];
+        syncTempArray(arr);
+        mergeSort(arr, temp, first, last);
     }
 
-    private static void step(Label[] array, int arraySize) {
-        if (firstPass) {
-            tempArray = Arrays.copyOf(array, arraySize);
-            leftIndex = first;
-            leftLast = Math.min(first + chunkSize-1, arraySize-1);
-            last = Math.min(first+2*chunkSize-1, arraySize-1);
-            rightIndex = leftLast+1;
-            rightLast = last;
-            i = 0;
-            fillBlank(array);
-            firstPass = false;
-        }
-
-        if (mergeComplete) {
-            tempArray = Arrays.copyOf(array, arraySize);
-            leftIndex = first;
-            leftLast = Math.min(first + chunkSize-1, arraySize-1);
-            last = Math.min(first+2*chunkSize-1, arraySize-1);
-            rightIndex = leftLast+1;
-            rightLast = last;
-            i = 0;
-            fillBlank(array);
-            mergeComplete = false;
-        }
-
-        merge(array);
-        
-        if (mergeComplete) {
-            if (first < arraySize - 2*chunkSize) {
-                first += 2*chunkSize;
-            } else if (chunkSize < arraySize) {
-                chunkSize = 2*chunkSize;
-                first = 0;
-            }
+    private static void mergeSort(Label[] arr, Label[] temp, int first, int last) {
+        if (first < last) { // base case - end recursion when first >= last
+            int mid = first + (last - first)/ 2; // find mid index
+      
+            mergeSort(arr, temp, first, mid); // recursively sort right half
+            mergeSort(arr, temp, mid + 1, last); // recursively sort left half
+      
+            merge(arr, temp, first, mid, last); // merge halves in ascending order
+            syncTempArray(arr);
         }
     }
     
-    private static void merge(Label[] array) {
-        // fill temp from left and right halves in ascending order
-        if (leftIndex <= leftLast && rightIndex <= rightLast) { // while both halves have remaining entries
-            Rectangle m = (Rectangle)tempArray[leftIndex].getGraphic();
-            Rectangle n = (Rectangle)tempArray[rightIndex].getGraphic();
-            if (m.getHeight() <= n.getHeight()) {
-                array[first+i] = tempArray[leftIndex];
+    public static void merge(Label[] arr, Label[] temp, int first, int mid, int last) {
+      
+        int leftIndex = first;
+        int leftLast = mid;
+        int rightIndex = mid + 1;
+        int rightLast = last;
+        int tempIndex = 0;
+
+        while (leftIndex <= leftLast && rightIndex <= rightLast) { // while both halves have remaining entries
+            Rectangle rLeft = (Rectangle)temp[leftIndex].getGraphic();
+            Rectangle rRight = (Rectangle)temp[rightIndex].getGraphic();
+            if (rLeft.getHeight() <= rRight.getHeight()) { 
+                int i = tempIndex;
+                Platform.runLater(() -> {
+                    arr[first + i].setGraphic(rLeft);
+                });
+                AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
+                thrd.delay(30);
                 leftIndex++;
             }
             else {
-                array[first+i] = tempArray[rightIndex];
+                int i = tempIndex;
+                Platform.runLater(() -> {
+                    arr[first + i].setGraphic(rRight);
+                });
+                AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
+                thrd.delay(30);
                 rightIndex++;
             }
-            i++;
-        } else if (leftIndex <= leftLast) { // left half has remaining entries
-            array[first+i] = tempArray[leftIndex];
-            leftIndex++;
-            i++;
-        } else if (rightIndex <= rightLast) { // right half has remaining entries
-            array[first+i] = tempArray[rightIndex];
-            rightIndex++;
-            i++;
+            tempIndex++;
         }
-        Main.redraw();
-        if (leftIndex > leftLast && rightIndex > rightLast) {
-            mergeComplete = true;
+      
+        while (leftIndex <= leftLast) { // left half has remaining entries
+            Rectangle rLeft = (Rectangle)temp[leftIndex].getGraphic();
+            int i = tempIndex;
+            Platform.runLater(() -> {
+                arr[first + i].setGraphic(rLeft);
+            });
+            AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
+            thrd.delay(30);
+            leftIndex++;
+            tempIndex++;
+        }
+      
+        while (rightIndex <= rightLast) { // right half has remaining entries
+            Rectangle rRight = (Rectangle)temp[rightIndex].getGraphic();
+            int i = tempIndex;
+            Platform.runLater(() -> {
+                arr[first + i].setGraphic(rRight);
+            });
+            AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
+            thrd.delay(30);
+            rightIndex++;
+            tempIndex++;
         }
     }
     
-    private static void fillBlank(Label[] array) {
-        for (int i = first; i <= last; i++) {
-            Label label = new Label(null, new Rectangle(4, 0));
+    private static void syncTempArray(Label[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            Rectangle r = (Rectangle)arr[i].getGraphic();
+            Label label = new Label(null, r);
             label.setMinSize(4, 200);
             label.setMaxSize(4, 200);
             label.setAlignment(Pos.BOTTOM_CENTER);
-            array[i] = label;
+            temp[i] = label;
         }
-        Main.redraw();
     }
 }

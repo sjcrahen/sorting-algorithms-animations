@@ -1,9 +1,5 @@
 package application;
 
-import java.util.Arrays;
-
-import com.sun.scenario.effect.Merge;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -30,28 +26,20 @@ public class Main extends Application {
     private static Label[] array;
     private Button shuffleButton, sortButton, stopButton;
     private static TilePane box;
-    private Timeline selSortAnimationController, insSortAnimationController, mergeSortAnimationController;
-//    private int iSelectionSort, jSelectionSort, minSelectionSort;
-//    private int iInsertionSort, jInsertionSort;
-//    private boolean unsortedItemFound;
-//    private Label itemToInsert;
-//    private Rectangle rectangle1, rectangle2, rectangle3;
-//    private int mergeSortSize, mergeSortFirst, leftIndex, leftLast, rightIndex, rightLast, fillIndex, mergeLast;
-//    private boolean mergeComplete, firstPass;
+    private Timeline selSortAnimationController, insSortAnimationController;
     private ComboBox<String> comboBox;
     private String algorithm;
+    private static AnimationControlThread controller;
     
 	@Override
 	public void start(Stage primaryStage) {
 		try {
 		    
 		    // Animation Controllers
-		    selSortAnimationController = new Timeline(new KeyFrame(Duration.millis(10), selSortStep));
+		    selSortAnimationController = new Timeline(new KeyFrame(Duration.millis(30), selSortStep));
 		    selSortAnimationController.setCycleCount(Timeline.INDEFINITE);
-		    insSortAnimationController = new Timeline(new KeyFrame(Duration.millis(10), insSortStep));
+		    insSortAnimationController = new Timeline(new KeyFrame(Duration.millis(30), insSortStep));
 		    insSortAnimationController.setCycleCount(Timeline.INDEFINITE);
-		    mergeSortAnimationController = new Timeline(new KeyFrame(Duration.millis(10), mergeSortStep));
-		    mergeSortAnimationController.setCycleCount(Timeline.INDEFINITE);
 		    
 		    // TilePane
 		    box = getTilePane();
@@ -61,7 +49,7 @@ public class Main extends Application {
 		    
             // create controls
             comboBox = new ComboBox<>();
-            comboBox.getItems().addAll("Choose a Sorting Algorithm","Selection Sort","Insertion Sort","Merge Sort");
+            comboBox.getItems().addAll("Choose a Sorting Algorithm","Selection Sort","Insertion Sort","Merge Sort", "Quick Sort");
             comboBox.getSelectionModel().selectFirst();
             comboBox.setOnAction(e -> setAlgorithm());          
             shuffleButton = new Button("SHUFFLE");
@@ -85,7 +73,7 @@ public class Main extends Application {
 		    
 			FlowPane root = new FlowPane(box, buttonBox);
 			FlowPane.setMargin(box, new Insets(20));
-            redraw();
+            drawArray();
 			
 			Scene scene = new Scene(root, 900, 600);
 			primaryStage.setScene(scene);
@@ -102,26 +90,41 @@ public class Main extends Application {
     }
 
     private void playAnimation() {
+        shuffle();
         switch (algorithm) {
             case "Selection Sort":
                 selSortAnimationController.play(); break;
             case "Insertion Sort":
                 insSortAnimationController.play(); break;
             case "Merge Sort":
-                mergeSortAnimationController.play(); break;
+                controller = new AnimationControlThread(array, algorithm);
+                controller.start();
+                break;
+            case "Quick Sort":
+                controller = new AnimationControlThread(array, algorithm);
+                controller.start();
+                break;
             default:
                 break;
         }
     }
     
     private void stopAnimation() {
+        SelectionSort.reset();
+        InsertionSort.reset();
         switch (algorithm) {
             case "Selection Sort":
                 selSortAnimationController.stop(); break;
             case "Insertion Sort":
                 insSortAnimationController.stop(); break;
             case "Merge Sort":
-                mergeSortAnimationController.stop(); break;
+                controller.setRunning(false);
+                controller.interrupt();
+                break;
+            case "Quick Sort":
+                controller.setRunning(false);
+                controller.interrupt();
+                break;
             default:
                 break;
         }
@@ -138,6 +141,14 @@ public class Main extends Application {
         }
         return a;
     }
+    
+    private void resetArray() {
+        for (int i = 0; i < N; i++) {
+            int j = i + 1;
+            Rectangle r = new Rectangle(4, j*2, Color.BLACK);
+            array[i].setGraphic(r);
+        }
+    }
 
     private TilePane getTilePane() {
 	    TilePane box = new TilePane();
@@ -149,224 +160,31 @@ public class Main extends Application {
         box.setMaxWidth(860);
         return box;
     }
-	
-	private void shuffle() {
-	    array = buildNewLabelArray();
-	    for (int i = 0; i < N; i++) {
+    
+    private void shuffle() {
+        resetArray();
+        for (int i = 0; i < N; i++) {
             int j = (int)(Math.random()*N);
-            swap(array, i, j);
+            swapGraphics(i, j);
         }
-        redraw();
-	    SelectionSort.reset();
-	    InsertionSort.reset();
-	    MergeSort.reset();
-	}
+    }
+    
+    private void swapGraphics(int i, int j) {
+        Rectangle rectangleI = (Rectangle)array[i].getGraphic();
+        Rectangle rectangleJ = (Rectangle)array[j].getGraphic();
+        array[i].setGraphic(rectangleJ);
+        array[j].setGraphic(rectangleI);
+    }
 	
-	public static void redraw() {
+	public static void drawArray() {
 	    box.getChildren().clear();
         for (int i = 0; i < N; i++) {
             box.getChildren().add(array[i]);
-        }        
+        }
     }
-
-//    private void resetSortIndices() {
-//        iSelectionSort = 0;
-//        jSelectionSort = 1;
-//        minSelectionSort = 0;
-//        iInsertionSort = 1;
-//        unsortedItemFound = false;
-//        mergeSortSize = 1;
-//        mergeSortFirst = 0;
-//        mergeComplete = false;
-//        firstPass = true;
-//    }
-
-    private void swap(Label[] a, int i, int j) {
-	    Label temp = a[i];
-	    a[i] = a[j];
-	    a[j] = temp;
-	}
 	
-//	private EventHandler<ActionEvent> mergeSortStep = e -> {
-//	    if (mergeSortSize > N) {
-//	        mergeSortAnimationController.stop();
-//	        mergeSortFirst = 0;
-//	        mergeSortSize = 1;
-//	        mergeComplete = false;
-//	        firstPass = true;
-//	    }
-//	    else {
-//	        mergeSortStep();
-//	    }
-//	};
-	
-	private EventHandler<ActionEvent> mergeSortStep = e -> MergeSort.sort(array, N, mergeSortAnimationController);
-	
-//	private void mergeSortStep() {
-//        if (firstPass) {
-//            mergeSortTempArray = Arrays.copyOf(array, array.length);
-//            leftIndex = mergeSortFirst;
-//            leftLast = Math.min(mergeSortFirst + mergeSortSize-1, N-1);
-//            mergeLast = Math.min(mergeSortFirst+2*mergeSortSize-1, N-1);
-//            rightIndex = leftLast+1;
-//            rightLast = mergeLast;
-//            fillIndex = 0;
-//            fillBlank();
-//            firstPass = false;
-//        }
-//
-//	    if (mergeComplete) {
-//	        mergeSortTempArray = Arrays.copyOf(array, array.length);
-//            leftIndex = mergeSortFirst;
-//	        leftLast = Math.min(mergeSortFirst + mergeSortSize-1, N-1);
-//            rightIndex = leftLast+1;
-//	        mergeLast = Math.min(mergeSortFirst + 2*mergeSortSize-1, N-1);
-//	        rightLast = mergeLast;
-//	        fillIndex = 0;
-//	        fillBlank();
-//	        mergeComplete = false;
-//	    }
-//
-//	    mergeStep();
-//	    
-//	    if (mergeComplete) {
-//    	    if (mergeSortFirst < N - 2*mergeSortSize) {
-//    	        mergeSortFirst += 2*mergeSortSize;
-//    	    } else if (mergeSortSize < N) {
-//    	        mergeSortSize = 2*mergeSortSize;
-//    	        mergeSortFirst = 0;
-//    	    }
-//	    }
-//	}
-		
-//	private void mergeStep() {	      
-//	    // fill temp from left and right halves in ascending order
-//	    if (leftIndex <= leftLast && rightIndex <= rightLast) { // while both halves have remaining entries
-//	        Rectangle m = (Rectangle)mergeSortTempArray[leftIndex].getGraphic();
-//            Rectangle n = (Rectangle)mergeSortTempArray[rightIndex].getGraphic();
-//	        if (m.getHeight() <= n.getHeight()) {
-//	            array[mergeSortFirst+fillIndex] = mergeSortTempArray[leftIndex];
-//	            leftIndex++;
-//	        }
-//	        else {
-//	            array[mergeSortFirst+fillIndex] = mergeSortTempArray[rightIndex];
-//	            rightIndex++;
-//	        }
-//	        fillIndex++;
-//	    } else if (leftIndex <= leftLast) { // left half has remaining entries
-//            array[mergeSortFirst+fillIndex] = mergeSortTempArray[leftIndex];
-//	        leftIndex++;
-//	        fillIndex++;
-//	    } else if (rightIndex <= rightLast) { // right half has remaining entries
-//            array[mergeSortFirst+fillIndex] = mergeSortTempArray[rightIndex];
-//	        rightIndex++;
-//	        fillIndex++;
-//	    }
-//	    redraw();
-//	    if (leftIndex > leftLast && rightIndex > rightLast) {
-//	        mergeComplete = true;
-//	    }
-//    }
-
-//    private void fillBlank() {
-//        for (int i = mergeSortFirst; i <= mergeLast; i++) {
-//            Label label = new Label(null, new Rectangle(4, 0));
-//            label.setMinSize(4, 200);
-//            label.setMaxSize(4, 200);
-//            label.setAlignment(Pos.BOTTOM_CENTER);
-//            array[i] = label;
-//        }
-//	    redraw();
-//	}
-    
-//    private EventHandler<ActionEvent> selSortStep = e -> {
-//        if (iSelectionSort == N-1) {
-//            selSortAnimationController.stop();
-//            iSelectionSort = 0;
-//            jSelectionSort = 1;
-//            minSelectionSort = 0;
-//        }
-//        else {
-//            rectangle1 = (Rectangle)array[iSelectionSort].getGraphic();
-//            rectangle1.setFill(Color.RED);
-//            selSortStep();
-//        }
-//    };
-    
-    private EventHandler<ActionEvent> selSortStep = e -> SelectionSort.sort(array, N, selSortAnimationController);
-    
-//    private void selSortStep() {
-//        if (jSelectionSort == N) {
-//            swap(array, iSelectionSort, minSelectionSort);
-//            rectangle1.setFill(Color.BLACK);
-//            rectangle2.setFill(Color.BLACK);
-//            rectangle3.setFill(Color.BLACK);
-//            redraw();
-//            iSelectionSort++;
-//            minSelectionSort = iSelectionSort;
-//            jSelectionSort = iSelectionSort+1;
-//        }
-//        else {
-//            if (rectangle2 != null && rectangle2.getFill() != Color.RED) rectangle2.setFill(Color.BLACK);
-//            rectangle2 = (Rectangle)array[jSelectionSort].getGraphic();
-//            rectangle3 = (Rectangle)array[minSelectionSort].getGraphic();
-//            rectangle2.setFill(Color.GRAY);
-//            if (rectangle2.getHeight() < rectangle3.getHeight()) {
-//                rectangle2.setFill(Color.RED);
-//                minSelectionSort = jSelectionSort;
-//                rectangle3.setFill(Color.BLACK);
-//            }
-//            jSelectionSort++;
-//        }
-//    }
-    
+    private EventHandler<ActionEvent> selSortStep = e -> SelectionSort.sort(array, N, selSortAnimationController);   
     private EventHandler<ActionEvent> insSortStep = e -> InsertionSort.sort(array, N, insSortAnimationController);
-    
-//    private EventHandler<ActionEvent> insSortStep = e -> {
-//        if (iInsertionSort == N) {
-//            rectangle3 = (Rectangle)array[iInsertionSort-1].getGraphic();
-//            rectangle3.setFill(Color.GRAY);
-//            insSortAnimationController.stop();
-//            iInsertionSort = 1;
-//            unsortedItemFound = false;
-//        }
-//        else {
-//            insertionSortStep();
-//        }
-//    };
-    
-//    private void insertionSortStep() {
-//        if (unsortedItemFound) {
-//            if (jInsertionSort > 0 && rectangle2.getHeight() < rectangle3.getHeight()) {
-//                Label label = new Label(null, rectangle3);
-//                label.setMinSize(4, 200);
-//                label.setMaxSize(4, 200);
-//                label.setAlignment(Pos.BOTTOM_CENTER);
-//                array[jInsertionSort] = label;
-//                jInsertionSort--;
-//                if (jInsertionSort > 0) rectangle3 = (Rectangle)array[jInsertionSort-1].getGraphic();
-//                redraw();
-//            } else {
-//                array[jInsertionSort] = itemToInsert;
-//                Rectangle r = (Rectangle)itemToInsert.getGraphic();
-//                r.setFill(Color.GRAY);
-//                unsortedItemFound = false;
-//                iInsertionSort++;
-//                redraw();
-//            }
-//        } else {
-//            rectangle2 = (Rectangle)array[iInsertionSort].getGraphic();
-//            rectangle3 = (Rectangle)array[iInsertionSort-1].getGraphic();
-//            if (rectangle2.getHeight() < rectangle3.getHeight()) {
-//                unsortedItemFound = true;
-//                itemToInsert = array[iInsertionSort];
-//                jInsertionSort = iInsertionSort;
-//            } else {
-//                rectangle3.setFill(Color.GRAY);
-//                iInsertionSort++;
-//            }
-//        }
-//    }
     
     public static void main(String[] args) {
 		launch(args);

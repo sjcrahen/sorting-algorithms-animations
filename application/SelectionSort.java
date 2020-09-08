@@ -8,7 +8,7 @@ import javafx.scene.shape.Rectangle;
 public class SelectionSort {
     
     private static int i, min, j = 1;
-    private static Rectangle r1, r2, r3;
+    private static Rectangle rI, rJ, rMin;
     
     private SelectionSort() {}
     
@@ -24,40 +24,34 @@ public class SelectionSort {
             reset();
         }
         else {
-            r1 = (Rectangle)array[i].getGraphic();
-            r1.setFill(Color.RED);
+            rI = (Rectangle)array[i].getGraphic();
+            rI.setFill(Color.RED);
             step(array, arraySize);
         }
     }    
     
     private static void step(Label[] array, int arraySize) {
         if (j == arraySize) {
-            swap(array, i, min);
-            r1.setFill(Color.BLACK);
-            r2.setFill(Color.BLACK);
-            r3.setFill(Color.BLACK);
-            Main.redraw();
+            array[i].setGraphic(rMin);
+            array[min].setGraphic(rI);
+            rI.setFill(Color.BLACK);
+            rJ.setFill(Color.BLACK);
+            rMin.setFill(Color.BLACK);
             i++;
             min = i;
             j = i+1;
         }
         else {
-            if (r2 != null && r2.getFill() != Color.RED) r2.setFill(Color.BLACK);
-            r2 = (Rectangle)array[j].getGraphic();
-            r3 = (Rectangle)array[min].getGraphic();
-            r2.setFill(Color.GRAY);
-            if (r2.getHeight() < r3.getHeight()) {
-                r2.setFill(Color.RED);
+            if (rJ != null && rJ.getFill() != Color.RED) rJ.setFill(Color.BLACK);
+            rJ = (Rectangle)array[j].getGraphic();
+            rMin = (Rectangle)array[min].getGraphic();
+            rJ.setFill(Color.GRAY);
+            if (rJ.getHeight() < rMin.getHeight()) {
+                rJ.setFill(Color.RED);
                 min = j;
-                r3.setFill(Color.BLACK);
+                rMin.setFill(Color.BLACK);
             }
             j++;
         }
-    }
-    
-    private static void swap(Label[] a, int i, int j) {
-        Label temp = a[i];
-        a[i] = a[j];
-        a[j] = temp;
     }
 }
