@@ -1,57 +1,52 @@
 package application;
 
-import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 public class SelectionSort {
     
-    private static int i, min, j = 1;
-    private static Rectangle rI, rJ, rMin;
+    private static int i, minIndex;
+    private static Rectangle recI, recJ, recMin;
+    private static AnimationControlThread thrd;
     
     private SelectionSort() {}
     
-    public static void reset() {
-        i = 0;
-        j = 1;
-        min = 0;
+    public static void sort(Label[] a) {
+        thrd = (AnimationControlThread)Thread.currentThread();
+
+        for (i = 0; i < a.length - 1; i++) {
+            minIndex = i;
+            recI = (Rectangle)a[i].getGraphic();
+            recMin = (Rectangle)a[minIndex].getGraphic();
+            for (int j = i + 1; j < a.length; j++) {
+                recJ = (Rectangle)a[j].getGraphic();
+                Platform.runLater(() -> {recJ.setFill(Color.GRAY);});
+                thrd.delay(20);
+                if (recJ.getHeight() < recMin.getHeight()) {
+                    Platform.runLater(() -> {
+                        recJ.setFill(Color.RED);
+                        recMin.setFill(Color.BLACK);});
+                    thrd.delay(20);
+                    minIndex = j;
+                    recMin = (Rectangle)a[minIndex].getGraphic();
+                } else {
+                    Platform.runLater(() -> {recJ.setFill(Color.BLACK);});
+                    thrd.delay(20);
+                }
+            }
+            if (i == minIndex) continue;
+            swap(a, i, minIndex, recI, recMin);
+        }
     }
     
-    public static void sort(Label[] array, int arraySize, Timeline animationController) {
-        if (i == arraySize - 1) {
-            animationController.stop();
-            reset();
-        }
-        else {
-            rI = (Rectangle)array[i].getGraphic();
-            rI.setFill(Color.RED);
-            step(array, arraySize);
-        }
-    }    
-    
-    private static void step(Label[] array, int arraySize) {
-        if (j == arraySize) {
-            array[i].setGraphic(rMin);
-            array[min].setGraphic(rI);
-            rI.setFill(Color.BLACK);
-            rJ.setFill(Color.BLACK);
-            rMin.setFill(Color.BLACK);
-            i++;
-            min = i;
-            j = i+1;
-        }
-        else {
-            if (rJ != null && rJ.getFill() != Color.RED) rJ.setFill(Color.BLACK);
-            rJ = (Rectangle)array[j].getGraphic();
-            rMin = (Rectangle)array[min].getGraphic();
-            rJ.setFill(Color.GRAY);
-            if (rJ.getHeight() < rMin.getHeight()) {
-                rJ.setFill(Color.RED);
-                min = j;
-                rMin.setFill(Color.BLACK);
-            }
-            j++;
-        }
+    private static void swap(Label[] a, int i, int j, Rectangle rI, Rectangle rJ) {
+        thrd = (AnimationControlThread)Thread.currentThread();
+        Platform.runLater(() -> {
+            a[i].setGraphic(rJ);
+            a[j].setGraphic(rI);;
+            rJ.setFill(Color.BLACK);});
+        thrd.delay(20);
     }
 }

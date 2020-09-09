@@ -1,58 +1,39 @@
 package application;
 
-import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 public class InsertionSort {
     
-    private static int i = 1, j;
-    private static boolean unsortedItemFound;
-    private static Rectangle rI, rJ;
+    private static int insertIndex;
+    private static Rectangle rI, rJ, rToLeft;
+    private static AnimationControlThread thrd;
     
     private InsertionSort() {}
     
-    public static void reset() {
-        i = 1;
-        unsortedItemFound = false;
-    }
-    
-    public static void sort(Label[] array, int arraySize, Timeline animationController) {
-        if (i == arraySize) {
-            rJ = (Rectangle)array[i-1].getGraphic();
-            rJ.setFill(Color.GRAY);
-            animationController.stop();
-            reset();
-        }
-        else {
-            step(array);
-        }
-    }
-    
-    private static void step(Label[] array) {
-        if (unsortedItemFound) {
-            if (j > 0 && rI.getHeight() < rJ.getHeight()) {
-                array[j].setGraphic(rJ);
-                j--;
-                if (j > 0) rJ = (Rectangle)array[j-1].getGraphic();
-            } else {
-                array[j].setGraphic(rI);
-                rI.setFill(Color.GRAY);
-                unsortedItemFound = false;
-                i++;
-            }
-        } else {
-            rI = (Rectangle)array[i].getGraphic();
-            rJ = (Rectangle)array[i-1].getGraphic();
+    public static void sort(Label[] a) {
+        for (int i = 1; i < a.length; i++) {
+            rI = (Rectangle)a[i].getGraphic();
+            rJ = (Rectangle)a[i-1].getGraphic();
             if (rI.getHeight() < rJ.getHeight()) {
-                unsortedItemFound = true;
-                j = i;
-            } else {
-                rJ.setFill(Color.GRAY);
-                i++;
+                insert(a, i);
             }
         }
     }
-
+    
+    private static void insert(Label[] a, int itemIndex) {
+        thrd = (AnimationControlThread)Thread.currentThread();
+        Rectangle itemToInsert = (Rectangle)a[itemIndex].getGraphic();
+        insertIndex = itemIndex;
+        rToLeft = (Rectangle)a[insertIndex - 1].getGraphic();
+        while (insertIndex > 0 && itemToInsert.getHeight() < rToLeft.getHeight()) {
+            Platform.runLater(() -> {a[insertIndex].setGraphic(rToLeft);});
+            thrd.delay(20);
+            insertIndex--;
+            if (insertIndex > 0) rToLeft = (Rectangle)a[insertIndex - 1].getGraphic();
+        }
+        Platform.runLater(() -> {a[insertIndex].setGraphic(itemToInsert);});
+        thrd.delay(20);
+    }
 }

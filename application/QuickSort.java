@@ -6,6 +6,10 @@ import javafx.scene.shape.Rectangle;
 
 public class QuickSort {
     
+    private static int insertIndex;
+    private static Rectangle rToLeft;
+    private static AnimationControlThread thrd;
+    
     private QuickSort() {}
     
     public static void sort(Label[] a, int first, int last) {
@@ -80,34 +84,28 @@ public class QuickSort {
     }
       
     private static void swap(Label[] a, int i, int j, Rectangle rI, Rectangle rJ) {
+        thrd = (AnimationControlThread)Thread.currentThread();
         Platform.runLater(() -> {
             a[i].setGraphic(rJ);
-            a[j].setGraphic(rI);
-        });
-        AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
-        thrd.delay(30);
+            a[j].setGraphic(rI);});
+        thrd.delay(25);
     }
       
     private static void insert(Label[] a, int itemIndex) {
-        AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
+        thrd = (AnimationControlThread)Thread.currentThread();
         Rectangle itemToInsert = (Rectangle)a[itemIndex].getGraphic();
-        int i = itemIndex;
-        Rectangle rToLeft = (Rectangle)a[i - 1].getGraphic();
-        while (i > 0 && itemToInsert.getHeight() < rToLeft.getHeight()) {
-            Rectangle r = rToLeft;
-            int position = i;
+        insertIndex = itemIndex;
+        rToLeft = (Rectangle)a[insertIndex - 1].getGraphic();
+        while (insertIndex > 0 && itemToInsert.getHeight() < rToLeft.getHeight()) {
             Platform.runLater(() -> {
-                a[position].setGraphic(r);
+                a[insertIndex].setGraphic(rToLeft);
             });
-            thrd.delay(30);
-            i--;
-            if (i > 0) rToLeft = (Rectangle)a[i - 1].getGraphic();
+            thrd.delay(25);
+            insertIndex--;
+            if (insertIndex > 0) rToLeft = (Rectangle)a[insertIndex - 1].getGraphic();
         }
-        int position = i;
-        Platform.runLater(() -> {
-            a[position].setGraphic(itemToInsert);
-        });
-        thrd.delay(30);
+        Platform.runLater(() -> {a[insertIndex].setGraphic(itemToInsert);});
+        thrd.delay(25);
     }
     
 }

@@ -1,5 +1,6 @@
 package application;
 
+import javafx.application.Platform;
 import javafx.scene.control.Label;
 
 public class AnimationControlThread extends Thread {
@@ -16,14 +17,19 @@ public class AnimationControlThread extends Thread {
     
     public void run() {
         running = true;
+        delay(500);
         try {
             switch(algorithm) {
+                case "Selection Sort":
+                    SelectionSort.sort(array);
+                    break;
+                case "Insertion Sort":
+                    InsertionSort.sort(array);
+                    break;
                 case "Merge Sort":
-                    delay(500);
-                    MergeSort.mergeSort(array, 0, array.length - 1);
+                    MergeSort.sort(array);
                     break;
                 case "Quick Sort":
-                    delay(500);
                     QuickSort.sort(array, 0, array.length - 1);
                     break;
             }
@@ -31,6 +37,7 @@ public class AnimationControlThread extends Thread {
             
         } finally {
             running = false;
+            Platform.runLater(() -> Main.sortButton.setText("Shuffle & Sort"));
         }
     }
     

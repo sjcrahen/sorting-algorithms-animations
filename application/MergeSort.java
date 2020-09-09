@@ -8,54 +8,47 @@ import javafx.scene.shape.Rectangle;
 public class MergeSort {
     
     private static Label[] temp;
+    private static int leftIndex, leftLast, rightIndex, rightLast, tempIndex;
+    private static AnimationControlThread thrd;
     
     private MergeSort() {}
     
-    public static void mergeSort(Label[] arr, int first, int last) {
+    public static void sort(Label[] arr) {
         temp = new Label[arr.length];
         syncTempArray(arr);
-        mergeSort(arr, temp, first, last);
+        mergeSort(arr, 0, arr.length - 1);
     }
 
-    private static void mergeSort(Label[] arr, Label[] temp, int first, int last) {
+    private static void mergeSort(Label[] arr, int first, int last) {
         if (first < last) { // base case - end recursion when first >= last
             int mid = first + (last - first)/ 2; // find mid index
       
-            mergeSort(arr, temp, first, mid); // recursively sort right half
-            mergeSort(arr, temp, mid + 1, last); // recursively sort left half
+            mergeSort(arr, first, mid); // recursively sort right half
+            mergeSort(arr, mid + 1, last); // recursively sort left half
       
-            merge(arr, temp, first, mid, last); // merge halves in ascending order
+            merge(arr, first, mid, last); // merge halves in ascending order
             syncTempArray(arr);
         }
     }
     
-    public static void merge(Label[] arr, Label[] temp, int first, int mid, int last) {
-      
-        int leftIndex = first;
-        int leftLast = mid;
-        int rightIndex = mid + 1;
-        int rightLast = last;
-        int tempIndex = 0;
+    public static void merge(Label[] arr, int first, int mid, int last) {
+        thrd = (AnimationControlThread)Thread.currentThread();
+        leftIndex = first;
+        leftLast = mid;
+        rightIndex = mid + 1;
+        rightLast = last;
+        tempIndex = 0;
 
         while (leftIndex <= leftLast && rightIndex <= rightLast) { // while both halves have remaining entries
             Rectangle rLeft = (Rectangle)temp[leftIndex].getGraphic();
             Rectangle rRight = (Rectangle)temp[rightIndex].getGraphic();
-            if (rLeft.getHeight() <= rRight.getHeight()) { 
-                int i = tempIndex;
-                Platform.runLater(() -> {
-                    arr[first + i].setGraphic(rLeft);
-                });
-                AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
-                thrd.delay(30);
+            if (rLeft.getHeight() <= rRight.getHeight()) {
+                Platform.runLater(() -> {arr[first + tempIndex].setGraphic(rLeft);});
+                thrd.delay(25);
                 leftIndex++;
-            }
-            else {
-                int i = tempIndex;
-                Platform.runLater(() -> {
-                    arr[first + i].setGraphic(rRight);
-                });
-                AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
-                thrd.delay(30);
+            } else {
+                Platform.runLater(() -> {arr[first + tempIndex].setGraphic(rRight);});
+                thrd.delay(25);
                 rightIndex++;
             }
             tempIndex++;
@@ -63,24 +56,16 @@ public class MergeSort {
       
         while (leftIndex <= leftLast) { // left half has remaining entries
             Rectangle rLeft = (Rectangle)temp[leftIndex].getGraphic();
-            int i = tempIndex;
-            Platform.runLater(() -> {
-                arr[first + i].setGraphic(rLeft);
-            });
-            AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
-            thrd.delay(30);
+            Platform.runLater(() -> {arr[first + tempIndex].setGraphic(rLeft);});
+            thrd.delay(25);
             leftIndex++;
             tempIndex++;
         }
       
         while (rightIndex <= rightLast) { // right half has remaining entries
             Rectangle rRight = (Rectangle)temp[rightIndex].getGraphic();
-            int i = tempIndex;
-            Platform.runLater(() -> {
-                arr[first + i].setGraphic(rRight);
-            });
-            AnimationControlThread thrd = (AnimationControlThread)Thread.currentThread();
-            thrd.delay(30);
+            Platform.runLater(() -> {arr[first + tempIndex].setGraphic(rRight);});
+            thrd.delay(25);
             rightIndex++;
             tempIndex++;
         }

@@ -1,10 +1,6 @@
 package application;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,16 +13,14 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 
 public class Main extends Application {
     
     public static final int N = 100;
     private static Label[] array;
-    private Button shuffleButton, sortButton, stopButton;
+    public static Button sortButton;
     private static TilePane box;
-    private Timeline selSortAnimationController, insSortAnimationController;
     private ComboBox<String> comboBox;
     private String algorithm;
     private static AnimationControlThread controller;
@@ -34,43 +28,32 @@ public class Main extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-		    
-		    // Animation Controllers
-		    selSortAnimationController = new Timeline(new KeyFrame(Duration.millis(30), selSortStep));
-		    selSortAnimationController.setCycleCount(Timeline.INDEFINITE);
-		    insSortAnimationController = new Timeline(new KeyFrame(Duration.millis(30), insSortStep));
-		    insSortAnimationController.setCycleCount(Timeline.INDEFINITE);
-		    
-		    // TilePane
-		    box = getTilePane();
-		    
-		    // create array
+		    box = getTilePane(); // holds array of Label
 		    array = buildNewLabelArray();
 		    
             // create controls
             comboBox = new ComboBox<>();
-            comboBox.getItems().addAll("Choose a Sorting Algorithm","Selection Sort","Insertion Sort","Merge Sort", "Quick Sort");
+            comboBox.getItems().addAll("Choose a Sorting Algorithm","Selection Sort","Insertion Sort","Merge Sort","Quick Sort");
             comboBox.getSelectionModel().selectFirst();
-            comboBox.setOnAction(e -> setAlgorithm());          
-            shuffleButton = new Button("SHUFFLE");
-            shuffleButton.setOnAction(e -> shuffle());
-            sortButton = new Button("SORT");
-            sortButton.setOnAction(e -> playAnimation());
-            stopButton = new Button("STOP");
-            stopButton.setOnAction(e -> stopAnimation());
+            comboBox.setOnAction(e -> setAlgorithm()); 
+            comboBox.setMinWidth(200);
+            comboBox.setMaxWidth(200);
+            sortButton = new Button("Shuffle & Sort");
+            sortButton.setOnAction(e -> doSortOrStop());
+            sortButton.setMinWidth(200);
+            sortButton.setMaxWidth(200);
 		    
             // create buttonBox
 		    HBox buttonBox = new HBox();
 		    buttonBox.setAlignment(Pos.CENTER);
-            HBox.setMargin(shuffleButton, new Insets(20));
             HBox.setMargin(sortButton, new Insets(20));
             HBox.setMargin(comboBox, new Insets(20));
-            HBox.setMargin(stopButton, new Insets(20));
 		    buttonBox.setPadding(new Insets(20));
 		    buttonBox.setMinWidth(900);
 		    buttonBox.setMaxWidth(900);
-		    buttonBox.getChildren().addAll(comboBox, shuffleButton, sortButton, stopButton);
+		    buttonBox.getChildren().addAll(comboBox, sortButton);
 		    
+		    // container for array box and buttons
 			FlowPane root = new FlowPane(box, buttonBox);
 			FlowPane.setMargin(box, new Insets(20));
             drawArray();
@@ -80,6 +63,7 @@ public class Main extends Application {
 			primaryStage.setTitle("Sorting Animations");
 			primaryStage.setResizable(false);
 			primaryStage.show();
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -89,45 +73,28 @@ public class Main extends Application {
         algorithm = comboBox.getValue();
     }
 
-    private void playAnimation() {
-        shuffle();
-        switch (algorithm) {
-            case "Selection Sort":
-                selSortAnimationController.play(); break;
-            case "Insertion Sort":
-                insSortAnimationController.play(); break;
-            case "Merge Sort":
-                controller = new AnimationControlThread(array, algorithm);
-                controller.start();
-                break;
-            case "Quick Sort":
-                controller = new AnimationControlThread(array, algorithm);
-                controller.start();
-                break;
-            default:
-                break;
+    private void doSortOrStop() {
+        if (controller != null && controller.getRunning() == true) {
+            sortButton.setText("Shuffle & Sort");
+            controller.setRunning(false);
+            controller.interrupt();
+        } else {
+            shuffle();
+            sortButton.setText("Stop Sort");
+            controller = new AnimationControlThread(array, algorithm);
+            controller.start();
         }
     }
-    
-    private void stopAnimation() {
-        SelectionSort.reset();
-        InsertionSort.reset();
-        switch (algorithm) {
-            case "Selection Sort":
-                selSortAnimationController.stop(); break;
-            case "Insertion Sort":
-                insSortAnimationController.stop(); break;
-            case "Merge Sort":
-                controller.setRunning(false);
-                controller.interrupt();
-                break;
-            case "Quick Sort":
-                controller.setRunning(false);
-                controller.interrupt();
-                break;
-            default:
-                break;
-        }
+
+    private TilePane getTilePane() {
+        TilePane box = new TilePane();
+        box = new TilePane(4,1);
+        box.setAlignment(Pos.CENTER);
+        box.setMinHeight(420);
+        box.setMaxHeight(420);
+        box.setMinWidth(860);
+        box.setMaxWidth(860);
+        return box;
     }
 
     private Label[] buildNewLabelArray() {
@@ -142,25 +109,6 @@ public class Main extends Application {
         return a;
     }
     
-    private void resetArray() {
-        for (int i = 0; i < N; i++) {
-            int j = i + 1;
-            Rectangle r = new Rectangle(4, j*2, Color.BLACK);
-            array[i].setGraphic(r);
-        }
-    }
-
-    private TilePane getTilePane() {
-	    TilePane box = new TilePane();
-        box = new TilePane(4,1);
-        box.setAlignment(Pos.CENTER);
-        box.setMinHeight(420);
-        box.setMaxHeight(420);
-        box.setMinWidth(860);
-        box.setMaxWidth(860);
-        return box;
-    }
-    
     private void shuffle() {
         resetArray();
         for (int i = 0; i < N; i++) {
@@ -169,11 +117,19 @@ public class Main extends Application {
         }
     }
     
+    private void resetArray() {
+        for (int i = 0; i < N; i++) {
+            int j = i + 1;
+            Rectangle r = new Rectangle(4, j*2, Color.BLACK);
+            array[i].setGraphic(r);
+        }
+    }
+    
     private void swapGraphics(int i, int j) {
-        Rectangle rectangleI = (Rectangle)array[i].getGraphic();
-        Rectangle rectangleJ = (Rectangle)array[j].getGraphic();
-        array[i].setGraphic(rectangleJ);
-        array[j].setGraphic(rectangleI);
+        Rectangle recI = (Rectangle)array[i].getGraphic();
+        Rectangle recJ = (Rectangle)array[j].getGraphic();
+        array[i].setGraphic(recJ);
+        array[j].setGraphic(recI);
     }
 	
 	public static void drawArray() {
@@ -182,9 +138,6 @@ public class Main extends Application {
             box.getChildren().add(array[i]);
         }
     }
-	
-    private EventHandler<ActionEvent> selSortStep = e -> SelectionSort.sort(array, N, selSortAnimationController);   
-    private EventHandler<ActionEvent> insSortStep = e -> InsertionSort.sort(array, N, insSortAnimationController);
     
     public static void main(String[] args) {
 		launch(args);
