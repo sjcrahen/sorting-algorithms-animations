@@ -26,6 +26,9 @@ public class AnimationControlThread extends Thread {
                 case "Insertion Sort":
                     InsertionSort.sort(array);
                     break;
+                case "Shell Sort":
+                    ShellSort.sort(array);
+                    break;
                 case "Merge Sort":
                     MergeSort.sort(array);
                     break;

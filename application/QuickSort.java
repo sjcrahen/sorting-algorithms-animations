@@ -98,8 +98,7 @@ public class QuickSort {
         rToLeft = (Rectangle)a[insertIndex - 1].getGraphic();
         while (insertIndex > 0 && itemToInsert.getHeight() < rToLeft.getHeight()) {
             Platform.runLater(() -> {
-                a[insertIndex].setGraphic(rToLeft);
-            });
+                a[insertIndex].setGraphic(rToLeft);});
             thrd.delay(25);
             insertIndex--;
             if (insertIndex > 0) rToLeft = (Rectangle)a[insertIndex - 1].getGraphic();

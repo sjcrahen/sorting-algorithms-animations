@@ -33,7 +33,7 @@ public class Main extends Application {
 		    
             // create controls
             comboBox = new ComboBox<>();
-            comboBox.getItems().addAll("Choose a Sorting Algorithm","Selection Sort","Insertion Sort","Merge Sort","Quick Sort");
+            comboBox.getItems().addAll("Choose a Sorting Algorithm","Selection Sort","Insertion Sort","Shell Sort","Merge Sort","Quick Sort");
             comboBox.getSelectionModel().selectFirst();
             comboBox.setOnAction(e -> setAlgorithm()); 
             comboBox.setMinWidth(200);
